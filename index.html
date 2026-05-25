@@ -1514,9 +1514,12 @@ function runAutoTieBreaker() {
 
 function handleTieBreakerResult() {
   const wrongPlayers = G.tiePlayers.filter(p => G.curAnswers[p.id] === false);
+  const humanInTie   = G.tiePlayers.find(p => p.isHuman);
+  // 플레이어가 정답이고 오답자가 있으면 생존 확정
+  const humanSafe    = humanInTie && G.curAnswers[humanInTie.id] === true && wrongPlayers.length > 0;
 
   if (wrongPlayers.length === 0) {
-    // 전원 정답 → 결투 계속
+    // 전원 정답 → 아직 승부 미결 → 계속 문제 보여주기
     G.tbRound++;
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
@@ -1541,13 +1544,40 @@ function handleTieBreakerResult() {
   slowest.isEliminated = true;
   G.tiePlayers = G.tiePlayers.filter(p => p.id !== slowest.id);
 
+  // 플레이어 생존 확정 시 결투 대상에서 제외
+  if (humanSafe) {
+    G.tiePlayers = G.tiePlayers.filter(p => !p.isHuman);
+  }
+
   if (G.tiePlayers.length <= 1) {
-    // 결투 종료 — 마지막 1명만 남음
+    // 결투 종료
     G.isTieBreaker = false;
     G.tiePlayers   = [];
     showTieBreakerElimResult([slowest]);
+  } else if (humanSafe) {
+    // 플레이어 생존 확정 → 남은 AI들끼리 자동 결투
+    G.tbRound++;
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    overlay.innerHTML = `
+      <div class="ov-card">
+        <div style="font-size:2.2rem;margin-bottom:6px">🛡️</div>
+        <div style="font-size:1.4rem;font-weight:900;color:var(--accent);margin-bottom:8px">생존 확정!</div>
+        <div style="color:var(--muted);font-size:0.88rem;font-weight:500;margin-bottom:12px">정답을 맞혀 탈락 위기에서 벗어났습니다</div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-bottom:12px">
+          <div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:12px;padding:10px 14px;text-align:center">
+            <div style="font-size:1.6rem">${slowest.emoji}</div>
+            <div style="font-size:0.72rem;font-weight:700;color:#64748b;margin-top:3px">${slowest.name}</div>
+            <div style="font-size:0.78rem;font-weight:800;color:#ef4444;margin-top:2px">💀 탈락</div>
+          </div>
+        </div>
+        <div style="font-size:0.8rem;color:#f59e0b;font-weight:700">🤖 남은 AI들이 자동으로 결투를 이어갑니다...</div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    setTimeout(() => { document.body.removeChild(overlay); runAutoTieBreaker(); }, 2800);
   } else {
-    // 1명 탈락 후 결투 계속
+    // 플레이어 아직 위기 → 계속 문제 보여주기
     G.tbRound++;
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
