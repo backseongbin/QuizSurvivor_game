@@ -5,57 +5,220 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuizSurvivor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { corePlugins: { preflight: false } }</script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* ─── DESIGN TOKENS ─── */
     :root {
-      --bg:      #f8fafc;
-      --surface: #ffffff;
-      --border:  #e2e8f0;
-      --accent:  #6366f1;
-      --accent2: #818cf8;
-      --danger:  #ef4444;
-      --warn:    #f59e0b;
-      --text:    #0f172a;
-      --muted:   #94a3b8;
+      --bg:          #0d0d10;
+      --card:        #1c1c21;
+      --card-2:      #24242b;
+      --line:        #2e2e36;
+      --fg:          #f5f3ec;
+      --fg-dim:      #9a988f;
+      --fg-mute:     #5a584f;
+      --alive:       #d4ff3a;
+      --alive-soft:  rgba(212,255,58,0.12);
+      --danger:      #ff3357;
+      --danger-soft: rgba(255,51,87,0.12);
+      --warn:        #ffb84a;
+      --info:        #7ad3ff;
+      /* JS compatibility aliases */
+      --accent:      #d4ff3a;
+      --accent2:     #a3e635;
+      --surface:     #1c1c21;
+      --border:      #2e2e36;
+      --text:        #f5f3ec;
+      --muted:       #9a988f;
     }
 
+    /* ─── BASE ─── */
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
+      font-family: 'Pretendard Variable', -apple-system, 'Apple SD Gothic Neo', sans-serif;
       background: var(--bg);
-      color: var(--text);
+      color: var(--fg);
       min-height: 100vh;
       overflow-x: hidden;
+      position: relative;
     }
 
+    /* Film grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 180px 180px;
+      opacity: 0.04;
+      pointer-events: none;
+      z-index: 9997;
+      animation: grain 0.3s steps(2) infinite;
+    }
+
+    /* Scanlines */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.035) 3px,
+        rgba(0,0,0,0.035) 4px
+      );
+      pointer-events: none;
+      z-index: 9996;
+    }
+
+    @keyframes grain {
+      0%   { transform: translate(0,0); }
+      25%  { transform: translate(-2%,3%); }
+      50%  { transform: translate(3%,-1%); }
+      75%  { transform: translate(-1%,-2%); }
+      100% { transform: translate(2%,1%); }
+    }
+
+    @keyframes blink-soft {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    @keyframes slam-in {
+      from { transform: scale(1.5); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    @keyframes pop-in {
+      from { transform: scale(0.55); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-9px); }
+      40% { transform: translateX(9px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    /* ─── SCREENS ─── */
     .screen {
       display: none;
       min-height: 100vh;
-      padding: 20px 16px;
       flex-direction: column;
       align-items: center;
       justify-content: center;
     }
     .screen.active { display: flex; }
 
-    /* ─── START SCREEN ─── */
+    /* ─── CONFETTI ─── */
+    #confetti {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 500;
+      display: none;
+    }
+
+    /* ══════════════════════════════
+       START SCREEN
+    ══════════════════════════════ */
     #startScreen {
-      background: #f8fafc;
-      padding: 0 !important;
-      align-items: stretch !important;
-      justify-content: flex-start !important;
+      background: var(--bg);
+      padding: 0;
+      align-items: stretch;
+      justify-content: flex-start;
       overflow-y: auto;
     }
-    #startScreen * { font-family: 'Plus Jakarta Sans', sans-serif; }
 
-    /* option cards */
+    .start-inner {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 40px 20px 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      border-radius: 4px;
+      padding: 4px 10px;
+      margin-bottom: 28px;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: blink-soft 1.4s ease-in-out infinite;
+    }
+
+    .start-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4.5rem, 20vw, 7.5rem);
+      line-height: 0.88;
+      letter-spacing: 5px;
+      color: var(--fg);
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .logo-accent { color: var(--alive); }
+
+    .start-tagline {
+      font-size: 0.8rem;
+      color: var(--fg-dim);
+      letter-spacing: 0.3px;
+      margin-bottom: 36px;
+      text-align: center;
+    }
+
+    .config-panel {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .config-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--fg-mute);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .opt-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
     .opt-card {
-      border: 2px solid #e2e8f0;
-      background: #ffffff;
-      border-radius: 14px;
+      background: var(--card-2);
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
       padding: 14px 8px;
       text-align: center;
       cursor: pointer;
@@ -64,54 +227,95 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 4px;
     }
-    .opt-card:hover { border-color: #a5b4fc; background: #f5f3ff; transform: translateY(-1px); }
-    .opt-card.selected { border-color: #6366f1; background: #eef2ff; }
-    .opt-card .card-main { color: #64748b; }
-    .opt-card.selected .card-main { color: #4338ca; }
-    .opt-card .card-sub { color: #94a3b8; }
-    .opt-card.selected .card-sub { color: #818cf8; }
+    .opt-card:hover { border-color: var(--alive); background: rgba(212,255,58,0.05); transform: translateY(-1px); }
+    .opt-card.selected { border-color: var(--alive); background: rgba(212,255,58,0.08); }
 
-    /* start button */
-    #startScreen #btnStart {
-      background: #4f46e5;
-      color: #ffffff;
-      border: none;
-      border-radius: 16px;
-      padding: 17px;
-      font-size: 1.1rem;
+    .opt-card .card-main,
+    .opt-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--fg-dim);
+    }
+    .opt-card.selected .card-main,
+    .opt-card.selected .opt-num { color: var(--alive); }
+
+    .opt-card .card-sub,
+    .opt-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--fg-mute);
       font-weight: 700;
-      cursor: pointer;
+      letter-spacing: 0.5px;
+    }
+    .opt-card.selected .card-sub,
+    .opt-card.selected .opt-sub { color: rgba(212,255,58,0.75); }
+
+    #btnStart {
       width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 20px rgba(79,70,229,0.38);
+      padding: 18px;
+      background: var(--alive);
+      color: #0d0d10;
+      border: none;
+      border-radius: 14px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 4px;
+      cursor: pointer;
+      margin-bottom: 20px;
       transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      box-shadow: 0 0 22px rgba(212,255,58,0.22), 0 4px 16px rgba(0,0,0,0.35);
     }
-    #startScreen #btnStart:hover {
-      background: #4338ca;
+    #btnStart:hover {
+      background: #c4ef2a;
       transform: translateY(-2px);
-      box-shadow: 0 8px 28px rgba(79,70,229,0.45);
+      box-shadow: 0 0 36px rgba(212,255,58,0.38), 0 8px 26px rgba(0,0,0,0.45);
     }
-    #startScreen #btnStart:active { transform: translateY(0); }
+    #btnStart:active { transform: translateY(0); }
 
-    /* ─── ROULETTE SCREEN ─── */
-    #rouletteScreen { background: var(--bg); gap: 20px; }
+    .cat-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
 
-    .rou-title { font-size: 1.3rem; color: var(--muted); font-weight: 700; text-align: center; }
+    .cat-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: var(--fg-mute);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 5px 13px;
+      letter-spacing: 0.5px;
+    }
 
-    .rou-wrap { width: min(340px, 88vw); position: relative; }
+    /* ══════════════════════════════
+       ROULETTE SCREEN
+    ══════════════════════════════ */
+    #rouletteScreen { background: var(--bg); gap: 24px; }
+
+    .rou-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--fg-dim);
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .rou-wrap { width: min(320px, 88vw); position: relative; }
 
     .rou-box {
       height: 72px;
       overflow: hidden;
-      border-radius: 16px;
-      border: 2px solid var(--border);
-      background: var(--surface);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--card);
     }
 
     .rou-track { display: flex; flex-direction: column; will-change: transform; }
@@ -121,7 +325,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 700;
       flex-shrink: 0;
       width: 100%;
@@ -129,26 +333,28 @@
 
     .rou-ptr {
       position: absolute;
-      right: -16px;
+      right: -18px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--accent);
-      font-size: 1.3rem;
+      color: var(--alive);
+      font-size: 1.1rem;
     }
 
     .rou-result {
-      font-size: 1.1rem;
-      font-weight: 700;
-      min-height: 28px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 3px;
+      min-height: 32px;
       text-align: center;
       transition: opacity 0.4s;
     }
 
-    /* ─── QUIZ SCREEN ─── */
+    /* ══════════════════════════════
+       QUIZ SCREEN
+    ══════════════════════════════ */
     #quizScreen {
       padding: 14px 14px 20px;
       justify-content: flex-start;
-      padding-top: 14px;
       background: var(--bg);
     }
 
@@ -161,83 +367,88 @@
     }
 
     .round-chip {
-      font-size: 0.72rem;
-      color: #64748b;
-      background: var(--surface);
-      padding: 3px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--fg-dim);
+      background: var(--card);
+      padding: 4px 10px;
       border-radius: 20px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--line);
       white-space: nowrap;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.5px;
     }
 
     .cat-chip {
       padding: 3px 11px;
       border-radius: 20px;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
       white-space: nowrap;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .spacer { flex: 1; }
 
     .timer-num {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--accent);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 1px;
+      color: var(--alive);
       min-width: 38px;
       text-align: right;
-      font-variant-numeric: tabular-nums;
       transition: color 0.4s;
     }
 
     .tbar-wrap {
       width: min(600px, 100%);
-      height: 8px;
-      background: #e2e8f0;
-      border-radius: 4px;
+      height: 4px;
+      background: var(--line);
+      border-radius: 2px;
       overflow: hidden;
-      margin-bottom: 13px;
+      margin-bottom: 14px;
     }
 
     .tbar {
       height: 100%;
-      border-radius: 4px;
-      background: var(--accent);
+      border-radius: 2px;
+      background: var(--alive);
       transition: background 0.4s;
     }
 
     .q-card {
       width: min(600px, 100%);
-      background: var(--surface);
-      border-radius: 16px;
+      background: var(--card);
+      border-radius: 14px;
       padding: 20px 22px;
       margin-bottom: 11px;
-      border: 1px solid var(--border);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      border: 1px solid var(--line);
     }
 
     .q-num {
-      font-size: 0.68rem;
-      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.63rem;
+      color: var(--fg-mute);
       text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin-bottom: 9px;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
       font-weight: 700;
     }
 
     .q-text {
-      font-size: clamp(0.92rem, 2.5vw, 1.15rem);
-      line-height: 1.65;
+      font-size: clamp(0.92rem, 2.5vw, 1.1rem);
+      line-height: 1.7;
       margin-bottom: 11px;
-      color: var(--text);
+      color: var(--fg);
+      white-space: pre-line;
     }
 
     .q-hint {
-      font-size: 1.5rem;
-      letter-spacing: 7px;
-      color: var(--accent);
-      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.4rem;
+      letter-spacing: 6px;
+      color: var(--alive);
+      font-weight: 700;
     }
 
     .ans-row {
@@ -250,33 +461,35 @@
     .ans-input {
       flex: 1;
       padding: 12px 15px;
-      background: var(--surface);
-      border: 2px solid var(--border);
+      background: var(--card);
+      border: 1.5px solid var(--line);
       border-radius: 10px;
-      color: var(--text);
+      color: var(--fg);
       font-size: 1rem;
       outline: none;
       transition: border-color 0.15s;
       font-family: inherit;
     }
-    .ans-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
-    .ans-input:disabled { opacity: 0.45; }
+    .ans-input:focus { border-color: var(--alive); box-shadow: 0 0 0 3px rgba(212,255,58,0.1); }
+    .ans-input:disabled { opacity: 0.4; }
+    .ans-input::placeholder { color: var(--fg-mute); }
 
     .btn-sub {
       padding: 12px 18px;
-      background: var(--accent);
-      color: #ffffff;
+      background: var(--alive);
+      color: #0d0d10;
       border: none;
       border-radius: 10px;
-      font-size: 0.92rem;
-      font-weight: 700;
+      font-size: 0.88rem;
+      font-weight: 800;
       cursor: pointer;
       white-space: nowrap;
-      font-family: inherit;
-      transition: background 0.15s;
+      font-family: 'JetBrains Mono', monospace;
+      transition: background 0.15s, transform 0.1s;
     }
-    .btn-sub:hover { background: #4f46e5; }
-    .btn-sub:disabled { opacity: 0.4; cursor: default; }
+    .btn-sub:hover { background: #c4ef2a; }
+    .btn-sub:active { transform: scale(0.96); }
+    .btn-sub:disabled { opacity: 0.35; cursor: default; transform: none; }
 
     .ox-row {
       width: min(600px, 100%);
@@ -292,23 +505,26 @@
       font-size: 2.6rem;
       font-weight: 900;
       cursor: pointer;
-      border: 3px solid;
+      border: 2px solid;
       transition: transform 0.12s, box-shadow 0.12s;
       font-family: inherit;
     }
-    .ox-btn:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .ox-btn:hover { transform: scale(1.04); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     .ox-btn:active { transform: scale(0.96); }
-    .ox-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
-    .ox-o { background: #f0fdf4; border-color: #22c55e; color: #16a34a; }
-    .ox-x { background: #fef2f2; border-color: var(--danger); color: #dc2626; }
+    .ox-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+    .ox-o { background: rgba(212,255,58,0.07); border-color: var(--alive); color: var(--alive); }
+    .ox-x { background: rgba(255,51,87,0.07); border-color: var(--danger); color: var(--danger); }
 
     .p-section { width: min(600px, 100%); }
+
     .p-label {
-      font-size: 0.68rem;
-      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--fg-mute);
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 2px;
       margin-bottom: 7px;
+      font-weight: 700;
     }
 
     .p-grid {
@@ -318,8 +534,8 @@
     }
 
     .p-card {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
+      background: var(--card);
+      border: 1.5px solid var(--line);
       border-radius: 12px;
       padding: 8px 4px;
       text-align: center;
@@ -330,15 +546,33 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
-    .p-card.correct { border-color: #22c55e; background: #f0fdf4; }
-    .p-card.wrong   { border-color: var(--danger); background: #fef2f2; }
-    .p-card.elim    { opacity: 0.25; filter: grayscale(1); }
+    .p-card.correct { border-color: var(--alive); background: var(--alive-soft); }
+    .p-card.wrong   { border-color: var(--danger); background: var(--danger-soft); }
+    .p-card.elim    { opacity: 0.2; filter: grayscale(1); }
 
     .p-emo { font-size: 1.55rem; line-height: 1; }
-    .p-name { font-size: 0.67rem; color: var(--muted); margin-top: 3px; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-    .p-state { font-size: 0.64rem; margin-top: 2px; min-height: 14px; font-weight: 700; }
+
+    .p-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      color: var(--fg-mute);
+      margin-top: 3px;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    .p-state {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      margin-top: 2px;
+      min-height: 14px;
+      font-weight: 700;
+    }
+
     .p-badge {
       position: absolute; top: -6px; right: -6px;
       font-size: 0.8rem;
@@ -351,111 +585,121 @@
     /* ─── OVERLAY ─── */
     .overlay {
       position: fixed; inset: 0;
-      background: rgba(15,23,42,0.5);
+      background: rgba(0,0,0,0.72);
       display: flex; align-items: center; justify-content: center;
       z-index: 300;
+      backdrop-filter: blur(4px);
     }
 
     .ov-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
       padding: 28px 36px;
       text-align: center;
       max-width: 360px; width: 90%;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.14);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
       animation: pop-in 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    @keyframes pop-in {
-      from { transform: scale(0.55); opacity: 0; }
-      to   { transform: scale(1);    opacity: 1; }
+    /* ══════════════════════════════
+       ROUND RESULT SCREEN
+    ══════════════════════════════ */
+    #resultScreen { gap: 16px; background: var(--bg); }
+
+    #resultScreen.all-win {
+      background: radial-gradient(ellipse at 50% 25%, rgba(212,255,58,0.07) 0%, var(--bg) 65%);
+    }
+    #resultScreen.elim-shown {
+      background: radial-gradient(ellipse at 50% 20%, rgba(255,51,87,0.09) 0%, var(--bg) 65%);
     }
 
-    /* ─── ROUND RESULT ─── */
-    #resultScreen { gap: 14px; background: var(--bg); }
-
-    #resultScreen.all-win  { background: #f0fdf4; }
-    #resultScreen.elim-shown { background: #fef2f2; }
-
     .res-icon { font-size: 3.5rem; }
-    .res-title { font-size: clamp(1.6rem, 6vw, 2.5rem); font-weight: 900; text-align: center; }
+
+    .res-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.8rem, 10vw, 4.5rem);
+      letter-spacing: 4px;
+      text-align: center;
+      animation: slam-in 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    }
 
     .elim-cards { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 
     .elim-card {
-      background: var(--surface);
-      border: 2px solid #fca5a5;
+      background: var(--card);
+      border: 2px solid var(--danger);
       border-radius: 16px;
       padding: 16px 22px;
       text-align: center;
-      box-shadow: 0 2px 10px rgba(239,68,68,0.1);
       animation: shake 0.42s ease;
     }
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      20% { transform: translateX(-9px); }
-      40% { transform: translateX(9px); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(4px); }
-    }
 
-    .surv-info { color: var(--muted); font-size: 0.88rem; text-align: center; font-weight: 500; }
+    .surv-info {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--fg-dim);
+      font-size: 0.78rem;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
 
     .btn-next {
       padding: 14px 36px;
-      background: var(--accent);
-      color: #ffffff;
+      background: var(--alive);
+      color: #0d0d10;
       border: none;
-      border-radius: 14px;
-      font-size: 1rem;
-      font-weight: 700;
+      border-radius: 12px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.25rem;
+      letter-spacing: 3px;
       cursor: pointer;
-      font-family: inherit;
       transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
-      box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+      box-shadow: 0 0 18px rgba(212,255,58,0.18), 0 4px 14px rgba(0,0,0,0.35);
     }
     .btn-next:hover {
-      background: #4f46e5;
+      background: #c4ef2a;
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(99,102,241,0.45);
+      box-shadow: 0 0 30px rgba(212,255,58,0.32), 0 8px 24px rgba(0,0,0,0.45);
     }
     .btn-next:active { transform: translateY(0); }
 
-    /* ─── END SCREEN ─── */
-    #endScreen { gap: 12px; background: var(--bg); }
-    #endScreen.win  { background: linear-gradient(160deg, #eef2ff 0%, #f8fafc 65%); }
-    #endScreen.lose { background: #fef2f2; }
+    /* ══════════════════════════════
+       END SCREEN
+    ══════════════════════════════ */
+    #endScreen { gap: 14px; background: var(--bg); }
+
+    #endScreen.win {
+      background: radial-gradient(ellipse at 50% 28%, rgba(212,255,58,0.08) 0%, var(--bg) 70%);
+    }
+    #endScreen.lose {
+      background: radial-gradient(ellipse at 50% 20%, rgba(255,51,87,0.11) 0%, var(--bg) 70%);
+    }
 
     .end-icon { font-size: 4rem; }
 
     .end-title {
-      font-size: clamp(2.6rem, 11vw, 5rem);
-      font-weight: 900;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 14vw, 6rem);
+      letter-spacing: 5px;
       text-align: center;
     }
-    .end-win {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+    .end-win  { color: var(--alive); }
     .end-lose { color: var(--danger); }
 
-    .end-sub { color: var(--muted); font-size: 0.96rem; text-align: center; max-width: 280px; font-weight: 500; }
-
-    /* ─── CONFETTI CANVAS ─── */
-    #confetti {
-      position: fixed; inset: 0;
-      pointer-events: none;
-      z-index: 500;
-      display: none;
+    .end-sub {
+      color: var(--fg-dim);
+      font-size: 0.9rem;
+      text-align: center;
+      max-width: 280px;
+      font-weight: 500;
+      line-height: 1.55;
     }
 
     /* ─── RESPONSIVE ─── */
     @media (max-width: 400px) {
       .p-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
-      .q-hint { font-size: 1.25rem; letter-spacing: 5px; }
+      .q-hint { font-size: 1.2rem; letter-spacing: 4px; }
       .ox-btn { font-size: 2.2rem; }
     }
   </style>
@@ -466,102 +710,89 @@
 
 <!-- ════════════════ START SCREEN ════════════════ -->
 <div id="startScreen" class="screen active">
-  <div class="min-h-screen w-full flex flex-col">
+  <div class="start-inner">
 
-    <!-- 헤더 -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
-      <div class="max-w-2xl mx-auto px-6 flex items-center" style="height:64px">
-        <span class="text-2xl font-black" style="color:#4f46e5;letter-spacing:-1.5px">Quiz</span>
-        <span class="text-2xl font-black text-slate-900" style="letter-spacing:-1.5px">Survivor</span>
-      </div>
-    </header>
+    <!-- LIVE badge -->
+    <div class="live-badge">
+      <span class="live-dot"></span>LIVE
+    </div>
 
-    <!-- 메인 콘텐츠 -->
-    <main class="flex-1 flex flex-col items-center px-5 py-10 w-full" style="max-width:520px;margin:0 auto">
+    <!-- Title -->
+    <h1 class="start-logo">QUIZ<br><span class="logo-accent">SURVIVOR</span></h1>
+    <p class="start-tagline">최후의 1인이 살아남는 퀴즈 서바이벌</p>
 
-      <!-- 타이틀 -->
-      <div class="text-center mb-8 w-full">
-        <div class="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold mb-5"
-          style="background:#eef2ff;border:1px solid #c7d2fe;color:#4f46e5">
-          🏆 서바이벌 퀴즈 게임
-        </div>
-        <h1 class="font-black text-slate-900 leading-none mb-3"
-          style="font-size:clamp(3rem,11vw,4.8rem);letter-spacing:-4px">
-          QUIZ<br><span style="color:#4f46e5">SURVIVOR</span>
-        </h1>
-        <p class="text-slate-400 text-sm font-medium">최후의 1인이 살아남는 퀴즈 서바이벌</p>
-      </div>
+    <!-- Config panel -->
+    <div class="config-panel">
 
-      <!-- 설정 카드 -->
-      <div class="w-full rounded-3xl border border-slate-200 mb-4"
-        style="background:white;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
-
-        <!-- 인원 수 -->
-        <div class="mb-6">
-          <p class="text-xs font-bold text-slate-500 mb-3" style="text-transform:uppercase;letter-spacing:1.5px">👥 인원 수</p>
-          <div class="grid grid-cols-3 gap-3">
-            <button class="opt-card selected" data-g="p" data-v="6">
-              <div class="card-main font-black" style="font-size:1.7rem;line-height:1">6</div>
-              <div class="card-sub text-xs font-semibold mt-1">명</div>
-            </button>
-            <button class="opt-card" data-g="p" data-v="7">
-              <div class="card-main font-black" style="font-size:1.7rem;line-height:1">7</div>
-              <div class="card-sub text-xs font-semibold mt-1">명</div>
-            </button>
-            <button class="opt-card" data-g="p" data-v="8">
-              <div class="card-main font-black" style="font-size:1.7rem;line-height:1">8</div>
-              <div class="card-sub text-xs font-semibold mt-1">명</div>
-            </button>
-          </div>
-        </div>
-
-        <!-- 난이도 -->
-        <div>
-          <p class="text-xs font-bold text-slate-500 mb-3" style="text-transform:uppercase;letter-spacing:1.5px">⚙️ 난이도</p>
-          <div class="grid grid-cols-3 gap-3">
-            <button class="opt-card" data-g="d" data-v="easy">
-              <div style="font-size:1.6rem;margin-bottom:5px">🌱</div>
-              <div class="card-main text-sm font-bold">쉬움</div>
-              <div class="card-sub font-medium mt-0.5" style="font-size:0.7rem">25초</div>
-            </button>
-            <button class="opt-card selected" data-g="d" data-v="normal">
-              <div style="font-size:1.6rem;margin-bottom:5px">⚡</div>
-              <div class="card-main text-sm font-bold">보통</div>
-              <div class="card-sub font-medium mt-0.5" style="font-size:0.7rem">15초</div>
-            </button>
-            <button class="opt-card" data-g="d" data-v="hard">
-              <div style="font-size:1.6rem;margin-bottom:5px">🔥</div>
-              <div class="card-main text-sm font-bold">어려움</div>
-              <div class="card-sub font-medium mt-0.5" style="font-size:0.7rem">10초</div>
-            </button>
-          </div>
+      <!-- 인원 수 -->
+      <div>
+        <p class="config-label">👥 인원 수</p>
+        <div class="opt-group">
+          <button class="opt-card selected" data-g="p" data-v="6">
+            <span class="opt-num">6</span>
+            <span class="opt-sub">명</span>
+          </button>
+          <button class="opt-card" data-g="p" data-v="7">
+            <span class="opt-num">7</span>
+            <span class="opt-sub">명</span>
+          </button>
+          <button class="opt-card" data-g="p" data-v="8">
+            <span class="opt-num">8</span>
+            <span class="opt-sub">명</span>
+          </button>
         </div>
       </div>
 
-      <!-- 시작 버튼 -->
-      <button id="btnStart">🎮 게임 시작하기</button>
-
-      <!-- 카테고리 태그 -->
-      <div class="flex flex-wrap gap-2 justify-center mt-5">
-        <span class="text-xs font-semibold text-slate-400 rounded-full px-3 py-1.5" style="background:#f1f5f9">⭕ OX</span>
-        <span class="text-xs font-semibold text-slate-400 rounded-full px-3 py-1.5" style="background:#f1f5f9">🎬 영화</span>
-        <span class="text-xs font-semibold text-slate-400 rounded-full px-3 py-1.5" style="background:#f1f5f9">🌍 수도</span>
-        <span class="text-xs font-semibold text-slate-400 rounded-full px-3 py-1.5" style="background:#f1f5f9">📜 속담</span>
+      <!-- 난이도 -->
+      <div>
+        <p class="config-label">⚙️ 난이도</p>
+        <div class="opt-group">
+          <button class="opt-card" data-g="d" data-v="easy">
+            <span style="font-size:1.5rem">🌱</span>
+            <span class="opt-num" style="font-size:1.3rem">쉬움</span>
+            <span class="opt-sub">25초</span>
+          </button>
+          <button class="opt-card selected" data-g="d" data-v="normal">
+            <span style="font-size:1.5rem">⚡</span>
+            <span class="opt-num" style="font-size:1.3rem">보통</span>
+            <span class="opt-sub">15초</span>
+          </button>
+          <button class="opt-card" data-g="d" data-v="hard">
+            <span style="font-size:1.5rem">🔥</span>
+            <span class="opt-num" style="font-size:1.3rem">어려움</span>
+            <span class="opt-sub">10초</span>
+          </button>
+        </div>
       </div>
-    </main>
+    </div>
+
+    <!-- 시작 버튼 -->
+    <button id="btnStart">⚡ 입장하기</button>
+
+    <!-- 카테고리 태그 -->
+    <div class="cat-strip">
+      <span class="cat-tag">⭕ OX</span>
+      <span class="cat-tag">🎬 영화</span>
+      <span class="cat-tag">🌍 수도</span>
+      <span class="cat-tag">📜 속담</span>
+    </div>
+
   </div>
 </div>
 
 <!-- ════════════════ ROULETTE SCREEN ════════════════ -->
 <div id="rouletteScreen" class="screen">
+  <div class="live-badge" style="margin-bottom:28px">
+    <span class="live-dot"></span>CATEGORY SELECT
+  </div>
   <div class="rou-title" id="rouTitle">이번 라운드 게임 선택 중...</div>
-  <div class="rou-wrap">
+  <div class="rou-wrap" style="margin-top:16px">
     <div class="rou-box">
       <div class="rou-track" id="rouTrack"></div>
     </div>
     <div class="rou-ptr">◀</div>
   </div>
-  <div class="rou-result" id="rouResult"></div>
+  <div class="rou-result" id="rouResult" style="margin-top:16px"></div>
 </div>
 
 <!-- ════════════════ QUIZ SCREEN ════════════════ -->
@@ -580,7 +811,7 @@
   <div class="q-card">
     <div class="q-num"  id="qNum">문제 1 / 3</div>
     <div class="q-text" id="qText"></div>
-    <div class="q-hint" id="qHint"></div>
+    <div class="q-hint" id="qHint" style="display:none"></div>
   </div>
 
   <div class="ans-row" id="textAns">
@@ -603,8 +834,8 @@
 <div id="resultScreen" class="screen">
   <div id="winSection" style="text-align:center">
     <div class="res-icon">🎉</div>
-    <div class="res-title" style="color:var(--accent)">전원 생존!</div>
-    <div style="color:var(--muted);margin-top:8px;font-size:0.9rem">모두 정답! 탈락자가 없습니다</div>
+    <div class="res-title" style="color:var(--alive)">전원 생존!</div>
+    <div style="color:var(--fg-dim);margin-top:10px;font-size:0.88rem;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px">모두 정답! 탈락자가 없습니다</div>
   </div>
 
   <div id="elimSection" style="text-align:center;display:none">
@@ -622,7 +853,7 @@
   <div class="end-icon" id="endIcon">🏆</div>
   <div class="end-title" id="endTitle"></div>
   <div class="end-sub"   id="endSub"></div>
-  <button class="btn-next" id="btnRestart" style="margin-top:18px">↩ 다시 하기</button>
+  <button class="btn-next" id="btnRestart" style="margin-top:20px">↩ 다시 하기</button>
 </div>
 
 <script>
