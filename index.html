@@ -124,39 +124,71 @@
     }
 
     /* ══════════════════════════════
-       START SCREEN
+       START SCREEN — BROADCAST LOBBY
     ══════════════════════════════ */
     #startScreen {
-      background: var(--bg);
+      background:
+        radial-gradient(circle, rgba(46,46,54,0.65) 1px, transparent 1px) 0 0 / 30px 30px,
+        var(--bg);
       padding: 0;
       align-items: stretch;
       justify-content: flex-start;
       overflow-y: auto;
     }
 
-    .start-inner {
-      max-width: 480px;
+    .lobby-wrap {
+      max-width: 660px;
       margin: 0 auto;
-      padding: 40px 20px 52px;
+      padding: 0 22px 32px;
       display: flex;
       flex-direction: column;
-      align-items: center;
       width: 100%;
+      min-height: 100vh;
+      position: relative;
     }
 
-    .live-badge {
+    /* Sweeping scan line */
+    .lobby-scan {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--alive) 50%, transparent 100%);
+      opacity: 0;
+      pointer-events: none;
+      animation: scan-sweep 7s ease-in-out infinite 1s;
+      z-index: 1;
+    }
+    @keyframes scan-sweep {
+      0%   { top: 0%;   opacity: 0; }
+      5%   { opacity: 0.28; }
+      92%  { opacity: 0.1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* ─── Top bar ─── */
+    .lobby-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 13px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      z-index: 2;
+    }
+
+    .lobby-live {
       display: inline-flex;
       align-items: center;
       gap: 7px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.68rem;
+      font-size: 0.66rem;
       font-weight: 700;
-      letter-spacing: 2.5px;
+      letter-spacing: 2px;
       color: var(--danger);
       border: 1px solid var(--danger);
-      border-radius: 4px;
+      border-radius: 3px;
       padding: 4px 10px;
-      margin-bottom: 28px;
     }
 
     .live-dot {
@@ -164,44 +196,84 @@
       height: 7px;
       border-radius: 50%;
       background: var(--danger);
+      flex-shrink: 0;
       animation: blink-soft 1.4s ease-in-out infinite;
     }
 
-    .start-logo {
+    /* legacy alias used in roulette screen */
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      border-radius: 3px;
+      padding: 4px 10px;
+    }
+
+    .lobby-clock {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.64rem;
+      color: var(--fg-dim);
+      letter-spacing: 1.5px;
+    }
+
+    /* ─── Hero ─── */
+    .lobby-hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 0 16px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      z-index: 2;
+    }
+
+    .lobby-title {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(4.5rem, 20vw, 7.5rem);
-      line-height: 0.88;
-      letter-spacing: 5px;
+      font-size: clamp(3.8rem, 14vw, 6rem);
+      line-height: 0.85;
+      letter-spacing: 4px;
       color: var(--fg);
-      text-align: center;
-      margin-bottom: 14px;
     }
 
     .logo-accent { color: var(--alive); }
 
-    .start-tagline {
-      font-size: 0.8rem;
-      color: var(--fg-dim);
-      letter-spacing: 0.3px;
-      margin-bottom: 36px;
-      text-align: center;
+    .lobby-tagline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(0.85rem, 2.2vw, 1.15rem);
+      letter-spacing: 5px;
+      color: var(--fg-mute);
+      text-align: right;
+      line-height: 1.7;
+      border-right: 2px solid var(--alive);
+      padding-right: 12px;
+      align-self: center;
     }
 
-    .config-panel {
-      width: 100%;
+    /* ─── Config panels ─── */
+    .lobby-config-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 14px 0;
+    }
+
+    .lobby-panel {
       background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 22px;
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
+      border-radius: 10px;
+      padding: 14px 14px 12px;
     }
 
     .config-label {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       color: var(--fg-mute);
       letter-spacing: 2.5px;
       text-transform: uppercase;
@@ -212,14 +284,14 @@
     .opt-group {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 6px;
     }
 
     .opt-card {
       background: var(--card-2);
       border: 1.5px solid var(--line);
-      border-radius: 12px;
-      padding: 14px 8px;
+      border-radius: 8px;
+      padding: 11px 6px;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s, transform 0.1s;
@@ -227,7 +299,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 3px;
     }
     .opt-card:hover { border-color: var(--alive); background: rgba(212,255,58,0.05); transform: translateY(-1px); }
     .opt-card.selected { border-color: var(--alive); background: rgba(212,255,58,0.08); }
@@ -235,7 +307,7 @@
     .opt-card .card-main,
     .opt-num {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 2rem;
+      font-size: 1.8rem;
       line-height: 1;
       color: var(--fg-dim);
     }
@@ -245,28 +317,105 @@
     .opt-card .card-sub,
     .opt-sub {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.62rem;
+      font-size: 0.58rem;
       color: var(--fg-mute);
       font-weight: 700;
       letter-spacing: 0.5px;
     }
     .opt-card.selected .card-sub,
-    .opt-card.selected .opt-sub { color: rgba(212,255,58,0.75); }
+    .opt-card.selected .opt-sub { color: rgba(212,255,58,0.7); }
 
+    /* ─── Player preview ─── */
+    .player-preview-section {
+      border-bottom: 1px solid var(--line);
+      padding: 14px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .player-preview-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .pv-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .pv-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      background: var(--card);
+      border: 1.5px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+
+    .pv-card.is-you .pv-avatar {
+      border-color: var(--alive);
+      background: rgba(212,255,58,0.1);
+      box-shadow: 0 0 12px rgba(212,255,58,0.2);
+    }
+
+    .pv-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.5rem;
+      font-weight: 700;
+      color: var(--fg-mute);
+      letter-spacing: 1px;
+    }
+    .pv-card.is-you .pv-label { color: var(--alive); }
+
+    /* ─── Nickname ─── */
+    .nickname-section {
+      padding: 14px 0 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .nickname-input {
+      width: 100%;
+      padding: 13px 16px;
+      background: var(--card);
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      color: var(--fg);
+      font-size: 0.9rem;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+      transition: border-color 0.15s;
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+    .nickname-input:focus { border-color: var(--alive); box-shadow: 0 0 0 3px rgba(212,255,58,0.08); }
+    .nickname-input::placeholder { color: var(--fg-mute); font-size: 0.8rem; letter-spacing: 0.5px; }
+
+    /* ─── Start button ─── */
     #btnStart {
       width: 100%;
-      padding: 18px;
+      padding: 17px;
       background: var(--alive);
       color: #0d0d10;
       border: none;
-      border-radius: 14px;
+      border-radius: 8px;
       font-family: 'Bebas Neue', sans-serif;
       font-size: 1.5rem;
       letter-spacing: 4px;
       cursor: pointer;
-      margin-bottom: 20px;
+      margin-top: 14px;
       transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
       box-shadow: 0 0 22px rgba(212,255,58,0.22), 0 4px 16px rgba(0,0,0,0.35);
+      position: relative;
+      z-index: 2;
     }
     #btnStart:hover {
       background: #c4ef2a;
@@ -275,22 +424,43 @@
     }
     #btnStart:active { transform: translateY(0); }
 
-    .cat-strip {
+    /* ─── Footer ─── */
+    .lobby-footer {
       display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 0 0;
+      border-top: 1px solid var(--line);
+      margin-top: 16px;
       flex-wrap: wrap;
       gap: 8px;
-      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .sys-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--fg-mute);
+      letter-spacing: 3px;
+    }
+
+    .cat-strip-footer {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
     }
 
     .cat-tag {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.62rem;
+      font-size: 0.58rem;
       font-weight: 700;
       color: var(--fg-mute);
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 20px;
-      padding: 5px 13px;
+      padding: 4px 10px;
       letter-spacing: 0.5px;
     }
 
@@ -710,23 +880,31 @@
 
 <!-- ════════════════ START SCREEN ════════════════ -->
 <div id="startScreen" class="screen active">
-  <div class="start-inner">
+  <div class="lobby-wrap">
 
-    <!-- LIVE badge -->
-    <div class="live-badge">
-      <span class="live-dot"></span>LIVE
+    <!-- Scan sweep -->
+    <div class="lobby-scan"></div>
+
+    <!-- ── Top bar ── -->
+    <div class="lobby-topbar">
+      <div class="lobby-live">
+        <span class="live-dot"></span>● LIVE · 대기실
+      </div>
+      <div class="lobby-clock" id="lobbyClockDisplay">—</div>
     </div>
 
-    <!-- Title -->
-    <h1 class="start-logo">QUIZ<br><span class="logo-accent">SURVIVOR</span></h1>
-    <p class="start-tagline">최후의 1인이 살아남는 퀴즈 서바이벌</p>
+    <!-- ── Hero: title + tagline ── -->
+    <div class="lobby-hero">
+      <h1 class="lobby-title">QUIZ<br><span class="logo-accent">SURVIVOR</span></h1>
+      <div class="lobby-tagline">DEATH<br>·QUIZ·<br>SURVIVAL</div>
+    </div>
 
-    <!-- Config panel -->
-    <div class="config-panel">
+    <!-- ── Config: players | difficulty ── -->
+    <div class="lobby-config-row">
 
-      <!-- 인원 수 -->
-      <div>
-        <p class="config-label">👥 인원 수</p>
+      <!-- 참가 인원 -->
+      <div class="lobby-panel">
+        <p class="config-label">👥 참가 인원</p>
         <div class="opt-group">
           <button class="opt-card selected" data-g="p" data-v="6">
             <span class="opt-num">6</span>
@@ -744,37 +922,54 @@
       </div>
 
       <!-- 난이도 -->
-      <div>
+      <div class="lobby-panel">
         <p class="config-label">⚙️ 난이도</p>
         <div class="opt-group">
           <button class="opt-card" data-g="d" data-v="easy">
-            <span style="font-size:1.5rem">🌱</span>
-            <span class="opt-num" style="font-size:1.3rem">쉬움</span>
+            <span style="font-size:1.3rem">🌱</span>
+            <span class="opt-num" style="font-size:1.2rem">쉬움</span>
             <span class="opt-sub">25초</span>
           </button>
           <button class="opt-card selected" data-g="d" data-v="normal">
-            <span style="font-size:1.5rem">⚡</span>
-            <span class="opt-num" style="font-size:1.3rem">보통</span>
+            <span style="font-size:1.3rem">⚡</span>
+            <span class="opt-num" style="font-size:1.2rem">보통</span>
             <span class="opt-sub">15초</span>
           </button>
           <button class="opt-card" data-g="d" data-v="hard">
-            <span style="font-size:1.5rem">🔥</span>
-            <span class="opt-num" style="font-size:1.3rem">어려움</span>
+            <span style="font-size:1.3rem">🔥</span>
+            <span class="opt-num" style="font-size:1.2rem">어려움</span>
             <span class="opt-sub">10초</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- 시작 버튼 -->
+    <!-- ── Player preview ── -->
+    <div class="player-preview-section">
+      <p class="config-label">참가자 미리보기</p>
+      <div class="player-preview-grid" id="playerPreview"></div>
+    </div>
+
+    <!-- ── Nickname input ── -->
+    <div class="nickname-section">
+      <p class="config-label">🎮 닉네임</p>
+      <input id="nicknameInput" class="nickname-input" type="text"
+        placeholder="닉네임 입력 (비워두면 '나')" maxlength="8"
+        autocomplete="off" spellcheck="false">
+    </div>
+
+    <!-- ── Start button ── -->
     <button id="btnStart">⚡ 입장하기</button>
 
-    <!-- 카테고리 태그 -->
-    <div class="cat-strip">
-      <span class="cat-tag">⭕ OX</span>
-      <span class="cat-tag">🎬 영화</span>
-      <span class="cat-tag">🌍 수도</span>
-      <span class="cat-tag">📜 속담</span>
+    <!-- ── Footer ── -->
+    <div class="lobby-footer">
+      <span class="sys-label">SYS-01 · LOBBY</span>
+      <div class="cat-strip-footer">
+        <span class="cat-tag">⭕ OX</span>
+        <span class="cat-tag">🎬 영화</span>
+        <span class="cat-tag">🌍 수도</span>
+        <span class="cat-tag">📜 속담</span>
+      </div>
     </div>
 
   </div>
@@ -1123,14 +1318,16 @@ const DIFF = {
   hard:   { time: 10, aiWrong: 0.05 },
 };
 
+const HUMAN_EMOJI = '🐶';
+
 const AI_POOL = [
-  { name: '레드',   emoji: '🔴' },
-  { name: '블루',   emoji: '🔵' },
-  { name: '옐로',   emoji: '🟡' },
-  { name: '그린',   emoji: '🟢' },
-  { name: '퍼플',   emoji: '🟣' },
-  { name: '오렌지', emoji: '🟠' },
-  { name: '화이트', emoji: '⚪' },
+  { name: '늑대',   emoji: '🐺' },
+  { name: '호랑이', emoji: '🐯' },
+  { name: '여우',   emoji: '🦊' },
+  { name: '곰',     emoji: '🐻' },
+  { name: '사자',   emoji: '🦁' },
+  { name: '팬더',   emoji: '🐼' },
+  { name: '개구리', emoji: '🐸' },
 ];
 
 // ════════════════════════════════════════════════════
@@ -1196,13 +1393,16 @@ document.querySelectorAll('.opt-card').forEach(btn => {
     const g = btn.dataset.g;
     document.querySelectorAll(`[data-g="${g}"]`).forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
-    if (g === 'p') G.totalPlayers = +btn.dataset.v;
+    if (g === 'p') { G.totalPlayers = +btn.dataset.v; renderPlayerPreview(); }
     if (g === 'd') G.diff = btn.dataset.v;
   });
 });
 
 document.getElementById('btnStart').addEventListener('click', () => {
-  G.players = [{ id: 0, name: '나', emoji: '😊', isHuman: true, isEliminated: false }];
+  const nicknameEl = document.getElementById('nicknameInput');
+  const playerName = (nicknameEl && nicknameEl.value.trim()) || '나';
+  stopLobbyClock();
+  G.players = [{ id: 0, name: playerName, emoji: HUMAN_EMOJI, isHuman: true, isEliminated: false }];
   const pool = shuffle(AI_POOL);
   for (let i = 1; i < G.totalPlayers; i++) {
     G.players.push({ id: i, name: pool[i-1].name, emoji: pool[i-1].emoji, isHuman: false, isEliminated: false });
@@ -1210,6 +1410,53 @@ document.getElementById('btnStart').addEventListener('click', () => {
   G.round = 1;
   startRound();
 });
+
+// ════════════════════════════════════════════════════
+//  LOBBY CLOCK + PLAYER PREVIEW
+// ════════════════════════════════════════════════════
+const LOBBY_AI_ANIMALS = ['🐺','🐯','🦊','🐻','🦁','🐼','🐸'];
+let _clockIv = null;
+
+function updateLobbyClock() {
+  const el = document.getElementById('lobbyClockDisplay');
+  if (!el) return;
+  const kst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const pad = n => String(n).padStart(2, '0');
+  el.textContent =
+    `${kst.getFullYear()}.${pad(kst.getMonth()+1)}.${pad(kst.getDate())} KST ${pad(kst.getHours())}:${pad(kst.getMinutes())}:${pad(kst.getSeconds())}`;
+}
+
+function startLobbyClock() {
+  updateLobbyClock();
+  clearInterval(_clockIv);
+  _clockIv = setInterval(updateLobbyClock, 1000);
+}
+
+function stopLobbyClock() {
+  clearInterval(_clockIv);
+  _clockIv = null;
+}
+
+function renderPlayerPreview() {
+  const grid = document.getElementById('playerPreview');
+  if (!grid) return;
+  const count = G.totalPlayers;
+  let html = `<div class="pv-card is-you">
+    <div class="pv-avatar">${HUMAN_EMOJI}</div>
+    <span class="pv-label">YOU</span>
+  </div>`;
+  for (let i = 0; i < count - 1; i++) {
+    const em = LOBBY_AI_ANIMALS[i % LOBBY_AI_ANIMALS.length];
+    html += `<div class="pv-card">
+      <div class="pv-avatar">${em}</div>
+      <span class="pv-label">AI ${i+1}</span>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+startLobbyClock();
+renderPlayerPreview();
 
 // ════════════════════════════════════════════════════
 //  ROULETTE
@@ -1817,6 +2064,8 @@ function showEnd(win) {
 document.getElementById('btnRestart').addEventListener('click', () => {
   stopConfetti();
   showScreen('startScreen');
+  startLobbyClock();
+  renderPlayerPreview();
 });
 
 // ════════════════════════════════════════════════════
