@@ -2187,15 +2187,22 @@ function showEnd(win) {
   const screen = document.getElementById('endScreen');
   screen.className = 'screen active ' + (win ? 'win' : 'lose');
 
+  const msgs = {
+    easy:   { win: '꺼드럭거리지 말고 중간난이도 깨보시지', lose: '여기서도 틀리면 널 어쩌면 좋니' },
+    normal: { win: '오호 좀 하네 근데 어려움까지 깨면 인정', lose: '역시 중간은 아직 너한테 무리인가ㅋㅋ' },
+    hard:   { win: '와 이걸 성공한다고? 너는 인정할게', lose: '너무 어려우면 포기해ㅋ' },
+  };
+  const sub = msgs[G.diff][win ? 'win' : 'lose'];
+
   if (win) {
     document.getElementById('endIcon').textContent  = '🏆';
     document.getElementById('endTitle').innerHTML   = '<span class="end-win">우 승!</span>';
-    document.getElementById('endSub').textContent   = '최후의 1인! 당신이 챔피언입니다!';
+    document.getElementById('endSub').textContent   = sub;
     startConfetti();
   } else {
     document.getElementById('endIcon').textContent  = '💀';
     document.getElementById('endTitle').innerHTML   = '<span class="end-lose">탈 락...</span>';
-    document.getElementById('endSub').textContent   = '아쉽게도 탈락했습니다. 다시 도전해보세요!';
+    document.getElementById('endSub').textContent   = sub;
   }
 }
 
