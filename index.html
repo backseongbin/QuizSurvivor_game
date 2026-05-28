@@ -2055,10 +2055,11 @@ function runAutoTieBreaker() {
   }).join('');
 
   if (wrongPlayers.length === 0 || wrongPlayers.length > 1) {
-    // 전원 정답 or 2명 이상 오답 → 결투 계속
+    // 전원 정답 or 2명 이상 오답 → 오답자끼리 재결투
+    const nextPlayers = wrongPlayers.length > 1 ? wrongPlayers : G.tiePlayers;
     const msg = wrongPlayers.length === 0
       ? '😅 모두 정답 — 결투 계속...'
-      : `😤 오답자 ${wrongPlayers.length}명 — 1명이 될 때까지 결투 계속!`;
+      : `😤 오답자 ${wrongPlayers.length}명끼리 재결투!`;
 
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
@@ -2079,6 +2080,7 @@ function runAutoTieBreaker() {
     document.body.appendChild(overlay);
     setTimeout(() => {
       document.body.removeChild(overlay);
+      G.tiePlayers = nextPlayers;
       G.tbRound++;
       runAutoTieBreaker();
     }, 2400);
@@ -2121,11 +2123,13 @@ function handleTieBreakerResult() {
   const wrongPlayers = G.tiePlayers.filter(p => G.curAnswers[p.id] === false);
 
   if (wrongPlayers.length === 0 || wrongPlayers.length > 1) {
-    // 전원 정답 or 2명 이상 오답 → 결투 계속
-    G.tbRound++;
+    // 전원 정답 or 2명 이상 오답 → 오답자끼리 재결투
+    const nextPlayers = wrongPlayers.length > 1 ? wrongPlayers : G.tiePlayers;
     const msg = wrongPlayers.length === 0
       ? '모두 정답! 아직 승부가 나지 않았습니다'
-      : `오답자 ${wrongPlayers.length}명 — 1명이 될 때까지 결투 계속!`;
+      : `오답자 ${wrongPlayers.length}명끼리 재결투!`;
+    G.tiePlayers = nextPlayers;
+    G.tbRound++;
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
     overlay.innerHTML = `
