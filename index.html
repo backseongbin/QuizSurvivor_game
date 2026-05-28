@@ -2044,8 +2044,22 @@ function runAutoTieBreaker() {
 
   const wrongPlayers = G.tiePlayers.filter(p => !results[p.id]);
 
-  if (wrongPlayers.length === 0) {
-    // 전원 정답 → 결투 계속
+  const makeCards = () => G.tiePlayers.map(p => {
+    const ok = results[p.id];
+    return `
+      <div style="background:${ok ? '#f0fdf4' : '#fef2f2'};border:2px solid ${ok ? '#22c55e' : '#ef4444'};border-radius:14px;padding:12px 14px;text-align:center;min-width:70px">
+        <div style="font-size:1.9rem">${p.emoji}</div>
+        <div style="font-size:0.72rem;font-weight:700;color:#64748b;margin-top:4px">${p.name}</div>
+        <div style="font-size:0.85rem;font-weight:800;margin-top:4px;color:${ok ? '#16a34a' : '#ef4444'}">${ok ? '✓ 정답' : '✗ 오답'}</div>
+      </div>`;
+  }).join('');
+
+  if (wrongPlayers.length === 0 || wrongPlayers.length > 1) {
+    // 전원 정답 or 2명 이상 오답 → 결투 계속
+    const msg = wrongPlayers.length === 0
+      ? '😅 모두 정답 — 결투 계속...'
+      : `😤 오답자 ${wrongPlayers.length}명 — 1명이 될 때까지 결투 계속!`;
+
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
     overlay.innerHTML = `
@@ -2054,17 +2068,12 @@ function runAutoTieBreaker() {
           ⚔️ AI 자동 결투 ${G.tbRound}회차
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px">
-          ${G.tiePlayers.map(p => `
-            <div style="background:#f0fdf4;border:2px solid #22c55e;border-radius:14px;padding:12px 14px;text-align:center;min-width:70px">
-              <div style="font-size:1.9rem">${p.emoji}</div>
-              <div style="font-size:0.72rem;font-weight:700;color:#64748b;margin-top:4px">${p.name}</div>
-              <div style="font-size:0.85rem;font-weight:800;margin-top:4px;color:#16a34a">✓ 정답</div>
-            </div>`).join('')}
+          ${makeCards()}
         </div>
         <div style="font-size:0.78rem;background:#f8fafc;border-radius:8px;padding:8px 12px;margin-bottom:8px;color:var(--muted)">
           정답: <span style="font-weight:700;color:var(--text)">${randQ.a}</span>
         </div>
-        <div style="font-size:0.82rem;font-weight:600;color:var(--muted)">😅 모두 정답 — 결투 계속...</div>
+        <div style="font-size:0.82rem;font-weight:600;color:var(--muted)">${msg}</div>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -2076,8 +2085,8 @@ function runAutoTieBreaker() {
     return;
   }
 
-  // 오답자 중 가장 늦게 답한 1명만 탈락
-  const slowest = wrongPlayers.reduce((a, b) => simTimes[a.id] >= simTimes[b.id] ? a : b);
+  // 정확히 1명만 오답 → 탈락
+  const loser = wrongPlayers[0];
 
   const overlay = document.createElement('div');
   overlay.className = 'overlay';
@@ -2087,23 +2096,13 @@ function runAutoTieBreaker() {
         ⚔️ AI 자동 결투 ${G.tbRound}회차
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:16px">
-        ${G.tiePlayers.map(p => {
-          const ok = results[p.id];
-          const isSlowest = p.id === slowest.id;
-          return `
-            <div style="background:${ok ? '#f0fdf4' : '#fef2f2'};border:2px solid ${isSlowest ? '#7c3aed' : ok ? '#22c55e' : '#ef4444'};border-radius:14px;padding:12px 14px;text-align:center;min-width:70px">
-              <div style="font-size:1.9rem">${p.emoji}</div>
-              <div style="font-size:0.72rem;font-weight:700;color:#64748b;margin-top:4px">${p.name}</div>
-              <div style="font-size:0.85rem;font-weight:800;margin-top:4px;color:${ok ? '#16a34a' : '#ef4444'}">${ok ? '✓ 정답' : '✗ 오답'}</div>
-              ${isSlowest ? `<div style="font-size:0.65rem;font-weight:700;color:#7c3aed;margin-top:2px">⏰ 최후 답변</div>` : ''}
-            </div>`;
-        }).join('')}
+        ${makeCards()}
       </div>
       <div style="font-size:0.78rem;background:#f8fafc;border-radius:8px;padding:8px 12px;margin-bottom:8px;color:var(--muted)">
         정답: <span style="font-weight:700;color:var(--text)">${randQ.a}</span>
       </div>
       <div style="font-size:0.82rem;font-weight:600;color:#ef4444">
-        ${slowest.name} 탈락! (가장 늦게 답변)
+        ${loser.name} 탈락!
       </div>
     </div>
   `;
@@ -2111,26 +2110,29 @@ function runAutoTieBreaker() {
 
   setTimeout(() => {
     document.body.removeChild(overlay);
-    slowest.isEliminated = true;
+    loser.isEliminated = true;
     G.isTieBreaker = false;
     G.tiePlayers   = [];
-    showTieBreakerElimResult([slowest]);
+    showTieBreakerElimResult([loser]);
   }, 2400);
 }
 
 function handleTieBreakerResult() {
   const wrongPlayers = G.tiePlayers.filter(p => G.curAnswers[p.id] === false);
 
-  if (wrongPlayers.length === 0) {
-    // 전원 정답 → 결투 계속
+  if (wrongPlayers.length === 0 || wrongPlayers.length > 1) {
+    // 전원 정답 or 2명 이상 오답 → 결투 계속
     G.tbRound++;
+    const msg = wrongPlayers.length === 0
+      ? '모두 정답! 아직 승부가 나지 않았습니다'
+      : `오답자 ${wrongPlayers.length}명 — 1명이 될 때까지 결투 계속!`;
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
     overlay.innerHTML = `
       <div class="ov-card">
-        <div style="font-size:2.2rem;margin-bottom:6px">😅</div>
+        <div style="font-size:2.2rem;margin-bottom:6px">${wrongPlayers.length === 0 ? '😅' : '😤'}</div>
         <div style="font-size:1.5rem;font-weight:900;color:#ef4444;margin-bottom:6px">결투 계속!</div>
-        <div style="color:var(--muted);font-size:0.9rem;font-weight:500;margin-bottom:6px">모두 정답! 아직 승부가 나지 않았습니다</div>
+        <div style="color:var(--muted);font-size:0.9rem;font-weight:500;margin-bottom:6px">${msg}</div>
         <div style="font-size:0.82rem;color:var(--accent);font-weight:700">${G.tbRound}회차 결투 시작 →</div>
       </div>
     `;
@@ -2139,15 +2141,12 @@ function handleTieBreakerResult() {
     return;
   }
 
-  // 오답자 중 가장 늦게 답한 1명 탈락 → 즉시 결투 종료
-  const slowest = wrongPlayers.reduce((a, b) =>
-    (G.answerTimes[a.id] ?? Infinity) >= (G.answerTimes[b.id] ?? Infinity) ? a : b
-  );
-
-  slowest.isEliminated = true;
+  // 정확히 1명만 오답 → 탈락
+  const loser = wrongPlayers[0];
+  loser.isEliminated = true;
   G.isTieBreaker = false;
   G.tiePlayers   = [];
-  showTieBreakerElimResult([slowest]);
+  showTieBreakerElimResult([loser]);
 }
 
 function showTieBreakerElimResult(elimPlayers) {
